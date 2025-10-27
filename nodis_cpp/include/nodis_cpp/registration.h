@@ -29,13 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <chrono>
-#include <cstddef>
-#include <memory>
-
 namespace nodis_cpp
 {
-  
+
 enum class Registration { Join, Leave };
   
 }
