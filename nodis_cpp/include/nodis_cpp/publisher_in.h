@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "nodis_cpp/message_in.h"
 #include "nodis_cpp/registration.h"
 
 #include <chrono>
@@ -43,7 +42,9 @@ template <typename T>
 class PublisherIn
 {
 public:
-  using PublishFunction = std::function<bool(MessageIn<T>&&)>;
+  using TimePoint = std::chrono::time_point<std::chrono::utc_clock>;
+  using DataPtr = std::shared_ptr<const T>;
+  using PublishFunction = std::function<bool(const TimePoint&, const DataPtr&)>;
   using RegistrationFunction = std::function<void(const Registration)>;
 
   //! Default constructor.
@@ -78,23 +79,17 @@ public:
   {
     if (publish_function_)
     {
-      MessageIn<T> new_message;
-      new_message.time_ = std::chrono::utc_clock::now();
-      new_message.data_ = std::make_shared<const T>(data);
-      return publish(new_message);
+      return publish(std::chrono::utc_clock::now(), std::make_shared<const T>(data));
     }
     return false;
   }
 
   //! Publish a message to the nodis backbone.
-  bool publish(const std::shared_ptr<const T>& data) const
+  bool publish(const DataPtr& data) const
   {
     if (publish_function_)
     {
-      MessageIn<T> new_message;
-      new_message.time_ = std::chrono::utc_clock::now();
-      new_message.data_ = data;
-      return publish_function_(new_message);
+      return publish_function_(std::chrono::utc_clock::now(), data);
     }
     return false;
   }

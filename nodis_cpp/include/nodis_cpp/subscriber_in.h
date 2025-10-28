@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "nodis_cpp/message_in.h"
+#include "nodis_cpp/message.h"
 #include "nodis_cpp/registration.h"
 
 #include <cstddef>
@@ -45,8 +45,8 @@ template <typename T>
 class SubscriberIn
 {
 public:
-  using SyncFunction = std::function<std::vector<MessageIn<T>>(const std::size_t)>;
-  using RegistrationFunction = std::function<void(const Registration)>;
+  using SyncFunction = std::function<std::vector<Message<T>>(const std::size_t)>;
+  using RegistrationFunction = std::function<void(const Registration, std::size_t capacity)>;
 
   //! Default constructor.
   SubscriberIn() = default;
@@ -57,7 +57,7 @@ public:
   {
     if (registration_function_)
     {
-      registration_function_(Registration::Join);
+      registration_function_(Registration::Join, capacity_);
     }
   }
 
@@ -71,7 +71,7 @@ public:
   {
     if (registration_function_)
     {
-      registration_function_(Registration::Join);
+      registration_function_(Registration::Join, capacity_);
     }
   }
 

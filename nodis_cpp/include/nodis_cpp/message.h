@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <any>
 #include <chrono>
 #include <cstddef>
 #include <memory>
@@ -37,11 +38,16 @@ namespace nodis_cpp
 {
 
 template <typename T>
-struct MessageIn
+struct Message
 {
   std::chrono::time_point<std::chrono::utc_clock> time_;
-  std::size_t sequence_number_{ 0 };
   std::shared_ptr<const T> data_;
+};
+
+struct MessageAny
+{
+  std::chrono::time_point<std::chrono::utc_clock> time_;
+  std::any data_;
 };
   
 }
