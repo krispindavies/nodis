@@ -42,9 +42,7 @@ template <typename T>
 class PublisherIn
 {
 public:
-  using TimePoint = std::chrono::time_point<std::chrono::utc_clock>;
-  using DataPtr = std::shared_ptr<const T>;
-  using PublishFunction = std::function<bool(const TimePoint&, const DataPtr&)>;
+  using PublishFunction = std::function<bool(const TimePoint&, const std::shared_ptr<const T>&)>;
   using RegistrationFunction = std::function<void(const Registration)>;
 
   //! Default constructor.
@@ -85,7 +83,7 @@ public:
   }
 
   //! Publish a message to the nodis backbone.
-  bool publish(const DataPtr& data) const
+  bool publish(const std::shared_ptr<const T>& data) const
   {
     if (publish_function_)
     {

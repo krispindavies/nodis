@@ -97,7 +97,7 @@ public:
   }
 
   //! Retrieve a specific message.
-  const MessageIn<T>& getMessage(const std::size_t index) const
+  const Message<T>& getMessage(const std::size_t index) const
   {
     if (index >= inbox_.size())
     {
@@ -110,7 +110,7 @@ public:
   {
     if (registration_function_)
     {
-      registration_function_(Registration::Leave);
+      registration_function_(Registration::Leave, capacity_);
     }
   }
 
@@ -119,7 +119,7 @@ protected:
   RegistrationFunction registration_function_;
 
   std::size_t capacity_;
-  std::vector<MessageIn<T>> inbox_;
+  std::vector<Message<T>> inbox_;
 };
 
 }

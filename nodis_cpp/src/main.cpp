@@ -27,14 +27,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "nodis_cpp/publisher_in.h"
+#include "nodis_cpp/core.h"
+#include "nodis_cpp/subscriber_in.h"
 #include "nodis_cpp/subscriber_in.h"
 
 #include <iostream>
 
 int main()
 {
-  nodis_cpp::PublisherIn<double> double_pub;
-  nodis_cpp::SubscriberIn<double> double_sub;
+  nodis_cpp::Core core;
+  auto double_pub = core.publisherIn<double>("/data_link");
+  auto double_sub = core.subscriberIn<double>("/data_link", 10);
   std::cout << "Hello world!" << std::endl;
 }

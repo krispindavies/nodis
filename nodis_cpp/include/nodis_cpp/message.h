@@ -37,17 +37,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace nodis_cpp
 {
 
+using TimePoint = std::chrono::time_point<std::chrono::utc_clock>;
+
 template <typename T>
 struct Message
 {
-  std::chrono::time_point<std::chrono::utc_clock> time_;
+  TimePoint time_;
   std::shared_ptr<const T> data_;
 };
 
 struct MessageAny
 {
-  std::chrono::time_point<std::chrono::utc_clock> time_;
-  std::any data_;
+  TimePoint time_;
+  std::shared_ptr<void> data_;
 };
   
 }

@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <any>
 #include <functional>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <deque>
 #include <typeindex>
@@ -56,7 +57,7 @@ public:
     const std::type_index type = typeid(T);
     const TopicType topic_type = std::make_pair(topic, type);
 
-    const PublisherIn<T>::PublishFunction pub_func = [this, topic_type](const TimePoint& time, const DataPtr& data) -> bool
+    const typename PublisherIn<T>::PublishFunction pub_func = [this, topic_type](const TimePoint& time, const std::shared_ptr<const T>& data) -> bool
     {
       std::scoped_lock lock(pub_sub_mutex_);
 
@@ -70,7 +71,7 @@ public:
       // Construct an any message and add it to the inbox.
       MessageAny msg;
       msg.time_ = time;
-      msg.data_ = data;
+      msg.data_ = static_pointer_cast<void>(data);
       pub_sub_iter->second.inbox_.push_back(&&msg);
 
       // Reduce inbox down to max capacity.
@@ -81,7 +82,7 @@ public:
       return true;
     };
 
-    const PublisherIn<T>::RegistrationFunction reg_func = [this, topic_type](const Registration registration)
+    const typename PublisherIn<T>::RegistrationFunction reg_func = [this, topic_type](const Registration registration)
     {
       std::scoped_lock lock(pub_sub_mutex_);
       auto pub_sub_iter = pub_sub_table_.find(topic_type);
@@ -115,6 +116,80 @@ public:
     };
     
     return PublisherIn<T>{ pub_func, reg_func };
+  }
+
+  template <typename T>
+  SubscriberIn<T> subscriberIn(const std::string& topic, const std::size_t capacity)
+  {
+    const std::type_index type = typeid(T);
+    const TopicType topic_type = std::make_pair(topic, type);
+
+    const typename SubscriberIn<T>::SyncFunction sync_func = [this, topic_type](const std::size_t capacity) -> std::vector<Message<T>>
+    {
+      std::scoped_lock lock(pub_sub_mutex_);
+
+      // Find the appropriate pub/sub table entry.
+      auto pub_sub_iter = pub_sub_table_.find(topic_type);
+      if (pub_sub_iter == pub_sub_table_.end())
+      {
+        return {};
+      }
+
+      // Determine what starting index to start from when copying messages from the inbox.
+      std::size_t starting_index = 0;
+      if (pub_sub_iter->second.inbox_.size() > capacity)
+      {
+        starting_index = pub_sub_iter->second.inbox_.size() - capacity;
+      }
+      
+      // Copy messages from the inbox to the result starting from the starting index.
+      std::vector<Message<T>> result;
+      result.reserve(capacity);
+      for (std::size_t index = starting_index; index < pub_sub_iter->second.inbox_.size(); index++)
+      {
+        Message<T> msg;
+        msg.time_ = pub_sub_iter->second.inbox_[index].time_;
+        msg.data_ = static_pointer_cast<const T>(pub_sub_iter->second.inbox_[index].data_);
+        result.push_back(&&msg);
+      }
+      return result;
+    };
+
+    const typename SubscriberIn<T>::RegistrationFunction reg_func = [this, topic_type](const Registration registration, const std::size_t capacity)
+    {
+      std::scoped_lock lock(pub_sub_mutex_);
+      auto pub_sub_iter = pub_sub_table_.find(topic_type);
+      switch (registration)
+      {
+        case Registration::Join:
+          if (pub_sub_iter == pub_sub_table_.end())
+          {
+            pub_sub_table_[topic_type] = PubSubEntry{ 0, 1, capacity };
+          }
+          else
+          {
+            pub_sub_iter->second.subscribers_ += 1;
+            pub_sub_iter->second.max_capacity_ = std::max(pub_sub_iter->second.max_capacity_, capacity);
+          }
+          break;
+
+        case Registration::Leave:
+          if (pub_sub_iter != pub_sub_table_.end())
+          {
+            if (pub_sub_iter->second.subscribers_ > 0)
+            {
+              pub_sub_iter->second.subscribers_ -= 1;
+            }
+            if (pub_sub_iter->second.publishers_ == 0 && pub_sub_iter->second.subscribers_ == 0)
+            {
+              pub_sub_table_.erase(pub_sub_iter);
+            }
+          }
+          break;
+      }
+    };
+    
+    return SubscriberIn<T>{ sync_func, reg_func };
   }
 
 protected:
