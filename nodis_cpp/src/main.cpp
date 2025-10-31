@@ -38,5 +38,15 @@ int main()
   nodis_cpp::Core core;
   auto double_pub = core.publisherIn<double>("/data_link");
   auto double_sub = core.subscriberIn<double>("/data_link", 10);
-  std::cout << "Hello world!" << std::endl;
+  double_pub.publish(6.4);
+  double_pub.publish(3.6);
+  double_pub.publish(4.9);
+  double_sub.sync();
+  std::cout << "Subscriber size: [" << double_sub.size() << "]" << std::endl;
+  std::cout << "Subscriber capacity: [" << double_sub.capacity() << "]" << std::endl;
+  for (std::size_t index = 0; index < double_sub.size(); index++)
+  {
+    std::cout << "Subscriber message [" << index << "], value [" << *(double_sub.getMessage(index).data_) << "]." << std::endl;
+  }
+  std::cout << "Done!" << std::endl;
 }

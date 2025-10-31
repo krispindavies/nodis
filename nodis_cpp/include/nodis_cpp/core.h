@@ -57,7 +57,7 @@ public:
     const std::type_index type = typeid(T);
     const TopicType topic_type = std::make_pair(topic, type);
 
-    const typename PublisherIn<T>::PublishFunction pub_func = [this, topic_type](const TimePoint& time, const std::shared_ptr<const T>& data) -> bool
+    const typename PublisherIn<T>::PublishFunction pub_func = [this, topic_type](const TimePoint& time, const std::shared_ptr<T>& data) -> bool
     {
       std::scoped_lock lock(pub_sub_mutex_);
 
@@ -72,10 +72,10 @@ public:
       MessageAny msg;
       msg.time_ = time;
       msg.data_ = static_pointer_cast<void>(data);
-      pub_sub_iter->second.inbox_.push_back(&&msg);
+      pub_sub_iter->second.inbox_.push_back(msg);
 
       // Reduce inbox down to max capacity.
-      while (pub_sub_iter->second.inbox_ > pub_sub_iter->second.max_capacity_)
+      while (pub_sub_iter->second.inbox_.size() > pub_sub_iter->second.max_capacity_)
       {
         pub_sub_iter->second.inbox_.pop_front();
       }
@@ -91,7 +91,7 @@ public:
         case Registration::Join:
           if (pub_sub_iter == pub_sub_table_.end())
           {
-            pub_sub_table_[topic_type] = PubSubEntry{ 1, 0, 1 };
+            pub_sub_table_[topic_type] = PubSubEntry::makeEntry(1, 0, 1);
           }
           else
           {
@@ -150,7 +150,7 @@ public:
         Message<T> msg;
         msg.time_ = pub_sub_iter->second.inbox_[index].time_;
         msg.data_ = static_pointer_cast<const T>(pub_sub_iter->second.inbox_[index].data_);
-        result.push_back(&&msg);
+        result.push_back(msg);
       }
       return result;
     };
@@ -164,7 +164,7 @@ public:
         case Registration::Join:
           if (pub_sub_iter == pub_sub_table_.end())
           {
-            pub_sub_table_[topic_type] = PubSubEntry{ 0, 1, capacity };
+            pub_sub_table_[topic_type] = PubSubEntry::makeEntry(0, 1, capacity);
           }
           else
           {
@@ -189,15 +189,19 @@ public:
       }
     };
     
-    return SubscriberIn<T>{ sync_func, reg_func };
+    return SubscriberIn<T>{ sync_func, reg_func, capacity };
   }
 
 protected:
   struct PubSubEntry
   {
-    PubSubEntry(const std::size_t publishers, const std::size_t subscribers, const std::size_t max_capacity)
-    : publishers_(publishers), 
+    static PubSubEntry makeEntry(const std::size_t publishers, const std::size_t subscribers, const std::size_t max_capacity)
     {
+      PubSubEntry result;
+      result.publishers_ = publishers;
+      result.subscribers_ = subscribers;
+      result.max_capacity_ = max_capacity;
+      return result;
     }
 
     std::size_t publishers_{ 0 };

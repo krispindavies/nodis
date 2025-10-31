@@ -66,8 +66,8 @@ public:
   SubscriberIn(SubscriberIn&& sub) = default;
 
   //! Main constructor.
-  SubscriberIn(const std::size_t capacity, const SyncFunction& sync_function, const RegistrationFunction& registration_function)
-  : capacity_(capacity), sync_function_(sync_function), registration_function_(registration_function)
+  SubscriberIn(const SyncFunction& sync_function, const RegistrationFunction& registration_function, const std::size_t capacity)
+  : sync_function_(sync_function), registration_function_(registration_function), capacity_(capacity)
   {
     if (registration_function_)
     {
@@ -103,6 +103,8 @@ public:
     {
       throw std::range_error("nodis_cpp::SubscriberIn::getMessage - indexed past the end of the inbox.");
     }
+
+    return inbox_.at(index);
   }
 
   //! Destructor to de-register subscriber.
