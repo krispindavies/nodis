@@ -7,4 +7,20 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include_directories(include)
 
-add_executable(main src/main.cpp)
+###########
+# INSTALL #
+###########
+
+install(
+  DIRECTORY
+    include  
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/
+)
+
+########
+# TEST #
+########
+
+add_executable(core_pub_sub_test test/core_pub_sub_test.cpp)
+target_link_libraries(core_pub_sub_test gtest)
+add_test(core_pub_sub_test_run core_pub_sub_test)

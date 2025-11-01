@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 #include <stdexcept>
 
@@ -45,7 +46,7 @@ template <typename T>
 class SubscriberIn
 {
 public:
-  using SyncFunction = std::function<std::vector<Message<T>>(const std::size_t)>;
+  using SyncFunction = std::function<std::vector<Message<T>>(const std::size_t, const std::optional<TimePoint>& time_point)>;
   using RegistrationFunction = std::function<void(const Registration, std::size_t capacity)>;
 
   //! Default constructor.
@@ -75,12 +76,26 @@ public:
     }
   }
 
-  //! Sync to the current buffer of messages from the nodis backbone.
+  //! Retrieve the entire buffer of messages from the nodis backbone.
   void sync()
   {
     if (sync_function_)
     {
-      inbox_ = sync_function_(capacity_);
+      inbox_ = sync_function_(capacity_, std::optional<TimePoint>{});
+    }
+  }
+
+  //! Retrieve all new messages from the nodis backbone.
+  void syncNew()
+  {
+    if (sync_function_)
+    {
+      std::optional<TimePoint> time_point;
+      if (!inbox_.empty())
+      {
+        time_point = inbox_.back().time_;
+      }
+      inbox_ = sync_function_(capacity_, time_point);
     }
   }
 

@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "nodis_cpp/registration.h"
 #include "nodis_cpp/subscriber_in.h"
 
+#include <algorithm>
 #include <any>
 #include <functional>
 #include <map>
@@ -42,6 +43,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <deque>
 #include <typeindex>
 #include <typeinfo>
+
+#include <iostream>
 
 namespace nodis_cpp
 {
@@ -74,17 +77,22 @@ public:
       msg.data_ = static_pointer_cast<const void>(data);
       pub_sub_iter->second.inbox_.push_back(msg);
 
+      // Sort by time to ensure that messages are in order.
+      std::sort(pub_sub_iter->second.inbox_.begin(), pub_sub_iter->second.inbox_.end(), [](const MessageAny& lhs, const MessageAny& rhs){ return lhs.time_ < rhs.time_; });
+
       // Reduce inbox down to max capacity.
       while (pub_sub_iter->second.inbox_.size() > pub_sub_iter->second.max_capacity_)
       {
         pub_sub_iter->second.inbox_.pop_front();
       }
+
       return true;
     };
 
     const typename PublisherIn<T>::RegistrationFunction reg_func = [this, topic_type](const Registration registration)
     {
       std::scoped_lock lock(pub_sub_mutex_);
+
       auto pub_sub_iter = pub_sub_table_.find(topic_type);
       switch (registration)
       {
@@ -124,7 +132,7 @@ public:
     const std::type_index type = typeid(T);
     const TopicType topic_type = std::make_pair(topic, type);
 
-    const typename SubscriberIn<T>::SyncFunction sync_func = [this, topic_type](const std::size_t capacity) -> std::vector<Message<T>>
+    const typename SubscriberIn<T>::SyncFunction sync_func = [this, topic_type](const std::size_t capacity, const std::optional<TimePoint>& time_point) -> std::vector<Message<T>>
     {
       std::scoped_lock lock(pub_sub_mutex_);
 
@@ -147,8 +155,17 @@ public:
       result.reserve(capacity);
       for (std::size_t index = starting_index; index < pub_sub_iter->second.inbox_.size(); index++)
       {
+        // Start making the message for the subscriber.
         Message<T> msg;
         msg.time_ = pub_sub_iter->second.inbox_[index].time_;
+
+        // If the message is older than the time point, continue to the next message.
+        if (time_point.has_value() && time_point.value() >= msg.time_)
+        {
+          continue;
+        }
+
+        // Finish making the message for the subscriber.
         msg.data_ = static_pointer_cast<const T>(pub_sub_iter->second.inbox_[index].data_);
         result.push_back(msg);
       }
