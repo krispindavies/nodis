@@ -57,7 +57,7 @@ public:
     const std::type_index type = typeid(T);
     const TopicType topic_type = std::make_pair(topic, type);
 
-    const typename PublisherIn<T>::PublishFunction pub_func = [this, topic_type](const TimePoint& time, const std::shared_ptr<T>& data) -> bool
+    const typename PublisherIn<T>::PublishFunction pub_func = [this, topic_type](const TimePoint& time, const std::shared_ptr<const T>& data) -> bool
     {
       std::scoped_lock lock(pub_sub_mutex_);
 
@@ -71,7 +71,7 @@ public:
       // Construct an any message and add it to the inbox.
       MessageAny msg;
       msg.time_ = time;
-      msg.data_ = static_pointer_cast<void>(data);
+      msg.data_ = static_pointer_cast<const void>(data);
       pub_sub_iter->second.inbox_.push_back(msg);
 
       // Reduce inbox down to max capacity.

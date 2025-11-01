@@ -49,7 +49,7 @@ struct Message
 struct MessageAny
 {
   TimePoint time_;
-  std::shared_ptr<void> data_;
+  std::shared_ptr<const void> data_;
 };
   
 }
