@@ -80,7 +80,7 @@ public:
     }
   }
 
-  //! Retrieve the entire buffer of messages from the nodis backbone.
+  //! Retrieve the entire buffer of messages from the nodis core.
   void sync()
   {
     if (sync_function_)
@@ -89,7 +89,7 @@ public:
     }
   }
 
-  //! Retrieve all new messages from the nodis backbone.
+  //! Retrieve all new messages from the nodis core.
   void syncNew()
   {
     if (sync_function_)

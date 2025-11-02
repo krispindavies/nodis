@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "nodis_cpp/core.h"
 
-TEST(CorePubSubTest, core_pub_sub_test)
+TEST(NodisCppTest, pub_sub_test)
 {
   // Set up the core.
   nodis_cpp::Core core;

@@ -21,6 +21,6 @@ install(
 # TEST #
 ########
 
-add_executable(core_pub_sub_test test/core_pub_sub_test.cpp)
-target_link_libraries(core_pub_sub_test gtest)
-add_test(core_pub_sub_test_run core_pub_sub_test)
+add_executable(nodis_cpp_test test/nodis_cpp_test.cpp)
+target_link_libraries(nodis_cpp_test gtest)
+add_test(nodis_cpp_test_run nodis_cpp_test)
