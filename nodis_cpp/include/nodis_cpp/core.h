@@ -30,10 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <algorithm>
-#include <any>
 #include <deque>
 #include <functional>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -41,9 +39,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <typeinfo>
 
 #include "nodis_cpp/message.h"
-#include "nodis_cpp/publisher_in.h"
+#include "nodis_cpp/publisher.h"
 #include "nodis_cpp/registration.h"
-#include "nodis_cpp/subscriber_in.h"
+#include "nodis_cpp/subscriber.h"
+#include "nodis_cpp/types.h"
 
 namespace nodis_cpp
 {
@@ -54,12 +53,12 @@ public:
   using TopicType = std::pair<std::string, std::type_index>;
 
   template <typename T>
-  PublisherIn<T> publisherIn(const std::string& topic)
+  Publisher<T> publisher(const std::string& topic)
   {
     const std::type_index type = typeid(T);
     const TopicType topic_type = std::make_pair(topic, type);
 
-    const typename PublisherIn<T>::PublishFunction pub_func =
+    const typename Publisher<T>::PublishFunction pub_func =
       [this, topic_type](const TimePoint& time, const std::shared_ptr<const T>& data) -> bool
     {
       std::scoped_lock lock(pub_sub_mutex_);
@@ -72,14 +71,14 @@ public:
       }
 
       // Construct an any message and add it to the inbox.
-      MessageAny msg;
+      MessageVoid msg;
       msg.time_ = time;
       msg.data_ = static_pointer_cast<const void>(data);
       pub_sub_iter->second.inbox_.push_back(msg);
 
       // Sort by time to ensure that messages are in order.
       std::sort(pub_sub_iter->second.inbox_.begin(), pub_sub_iter->second.inbox_.end(),
-                [](const MessageAny& lhs, const MessageAny& rhs) { return lhs.time_ < rhs.time_; });
+                [](const MessageVoid& lhs, const MessageVoid& rhs) { return lhs.time_ < rhs.time_; });
 
       // Reduce inbox down to max capacity.
       while (pub_sub_iter->second.inbox_.size() > pub_sub_iter->second.max_capacity_)
@@ -90,7 +89,7 @@ public:
       return true;
     };
 
-    const typename PublisherIn<T>::RegistrationFunction reg_func = [this, topic_type](const Registration registration)
+    const typename Publisher<T>::RegistrationFunction reg_func = [this, topic_type](const Registration registration)
     {
       std::scoped_lock lock(pub_sub_mutex_);
 
@@ -124,16 +123,16 @@ public:
       }
     };
 
-    return PublisherIn<T>{pub_func, reg_func};
+    return Publisher<T>{pub_func, reg_func};
   }
 
   template <typename T>
-  SubscriberIn<T> subscriberIn(const std::string& topic, const std::size_t capacity)
+  Subscriber<T> subscriber(const std::string& topic, const std::size_t capacity)
   {
     const std::type_index type = typeid(T);
     const TopicType topic_type = std::make_pair(topic, type);
 
-    const typename SubscriberIn<T>::SyncFunction sync_func =
+    const typename Subscriber<T>::SyncFunction sync_func =
       [this, topic_type](const std::size_t capacity,
                          const std::optional<TimePoint>& time_point) -> std::vector<Message<T>>
     {
@@ -175,7 +174,7 @@ public:
       return result;
     };
 
-    const typename SubscriberIn<T>::RegistrationFunction reg_func =
+    const typename Subscriber<T>::RegistrationFunction reg_func =
       [this, topic_type](const Registration registration, const std::size_t capacity)
     {
       std::scoped_lock lock(pub_sub_mutex_);
@@ -210,10 +209,16 @@ public:
       }
     };
 
-    return SubscriberIn<T>{sync_func, reg_func, capacity};
+    return Subscriber<T>{sync_func, reg_func, capacity};
   }
 
 protected:
+  struct MessageVoid
+  {
+    TimePoint time_;
+    std::shared_ptr<const void> data_;
+  };
+
   struct PubSubEntry
   {
     static PubSubEntry makeEntry(const std::size_t publishers,
@@ -230,7 +235,7 @@ protected:
     std::size_t publishers_{0};
     std::size_t subscribers_{0};
     std::size_t max_capacity_{0};
-    std::deque<MessageAny> inbox_;
+    std::deque<MessageVoid> inbox_;
   };
 
   std::mutex pub_sub_mutex_;

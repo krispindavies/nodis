@@ -38,12 +38,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "nodis_cpp/message.h"
 #include "nodis_cpp/registration.h"
+#include "nodis_cpp/types.h"
 
 namespace nodis_cpp
 {
 
 template <typename T>
-class SubscriberIn
+class Subscriber
 {
 public:
   using SyncFunction =
@@ -51,10 +52,10 @@ public:
   using RegistrationFunction = std::function<void(const Registration, std::size_t capacity)>;
 
   //! Default constructor.
-  SubscriberIn() = default;
+  Subscriber() = default;
 
   //! Copy constructor.
-  SubscriberIn(const SubscriberIn& sub)
+  Subscriber(const Subscriber& sub)
     : capacity_(sub.capacity_), sync_function_(sub.sync_function_), registration_function_(sub.registration_function_)
   {
     if (registration_function_)
@@ -65,12 +66,12 @@ public:
 
   //! Move constructor.
   // TODO(kdavies) = Check if we need to update registration, not sure if destructor is called.
-  SubscriberIn(SubscriberIn&& sub) = default;
+  Subscriber(Subscriber&& sub) = default;
 
   //! Main constructor.
-  SubscriberIn(const SyncFunction& sync_function,
-               const RegistrationFunction& registration_function,
-               const std::size_t capacity)
+  Subscriber(const SyncFunction& sync_function,
+             const RegistrationFunction& registration_function,
+             const std::size_t capacity)
     : sync_function_(sync_function), registration_function_(registration_function), capacity_(capacity)
   {
     if (registration_function_)
@@ -119,14 +120,14 @@ public:
   {
     if (index >= inbox_.size())
     {
-      throw std::range_error("nodis_cpp::SubscriberIn::getMessage - indexed past the end of the inbox.");
+      throw std::range_error("nodis_cpp::Subscriber::getMessage - indexed past the end of the inbox.");
     }
 
     return inbox_.at(index);
   }
 
   //! Destructor to de-register subscriber.
-  ~SubscriberIn()
+  ~Subscriber()
   {
     if (registration_function_)
     {

@@ -27,52 +27,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <gtest/gtest.h>
+#pragma once
 
-#include <iostream>
+#include <chrono>
 
-#include "nodis_cpp/core.h"
-
-TEST(CorePubSubTest, core_pub_sub_test)
+namespace nodis_cpp
 {
-  // Set up the core.
-  nodis_cpp::Core core;
 
-  // Set up the publisher.
-  auto double_pub = core.publisher<double>("/data_link");
+using TimePoint = std::chrono::time_point<std::chrono::utc_clock>;
 
-  // Set up the subscriber.
-  auto double_sub = core.subscriber<double>("/data_link", 10);
-  EXPECT_EQ(10, double_sub.capacity());
-  EXPECT_EQ(0, double_sub.size());
-
-  // Publish some messages.
-  ASSERT_NO_THROW(double_pub.publish(6.4));
-  ASSERT_NO_THROW(double_pub.publish(3.6));
-  ASSERT_NO_THROW(double_pub.publish(4.9));
-
-  // Retrieve all messages.
-  ASSERT_NO_THROW(double_sub.sync());
-  EXPECT_EQ(10, double_sub.capacity());
-  ASSERT_EQ(3, double_sub.size());
-  EXPECT_EQ(6.4, *(double_sub.getMessage(0).data_));
-  EXPECT_EQ(3.6, *(double_sub.getMessage(1).data_));
-  EXPECT_EQ(4.9, *(double_sub.getMessage(2).data_));
-
-  // Publish new messages.
-  ASSERT_NO_THROW(double_pub.publish(1.9));
-  ASSERT_NO_THROW(double_pub.publish(9.7));
-
-  // Retrieve only new messages.
-  ASSERT_NO_THROW(double_sub.syncNew());
-  EXPECT_EQ(10, double_sub.capacity());
-  ASSERT_EQ(2, double_sub.size());
-  EXPECT_EQ(1.9, *(double_sub.getMessage(0).data_));
-  EXPECT_EQ(9.7, *(double_sub.getMessage(1).data_));
-}
-
-int main(int argc, char** argv)
-{
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
+}  // namespace nodis_cpp

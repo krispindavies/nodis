@@ -29,27 +29,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <any>
-#include <chrono>
-#include <cstddef>
 #include <memory>
+
+#include "nodis_cpp/types.h"
 
 namespace nodis_cpp
 {
-
-using TimePoint = std::chrono::time_point<std::chrono::utc_clock>;
 
 template <typename T>
 struct Message
 {
   TimePoint time_;
   std::shared_ptr<const T> data_;
-};
-
-struct MessageAny
-{
-  TimePoint time_;
-  std::shared_ptr<const void> data_;
 };
 
 }  // namespace nodis_cpp

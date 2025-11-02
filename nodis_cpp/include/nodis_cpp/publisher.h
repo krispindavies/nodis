@@ -34,22 +34,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include "nodis_cpp/registration.h"
+#include "nodis_cpp/types.h"
 
 namespace nodis_cpp
 {
 
 template <typename T>
-class PublisherIn
+class Publisher
 {
 public:
   using PublishFunction = std::function<bool(const TimePoint&, const std::shared_ptr<const T>&)>;
   using RegistrationFunction = std::function<void(const Registration)>;
 
   //! Default constructor.
-  PublisherIn() = default;
+  Publisher() = default;
 
   //! Copy constructor.
-  PublisherIn(const PublisherIn& pub)
+  Publisher(const Publisher& pub)
     : publish_function_(pub.publish_function_), registration_function_(pub.registration_function_)
   {
     if (registration_function_)
@@ -60,10 +61,10 @@ public:
 
   //! Move constructor.
   // TODO(kdavies) = Check if we need to update registration, not sure if destructor is called.
-  PublisherIn(PublisherIn&& pub) = default;
+  Publisher(Publisher&& pub) = default;
 
   //! Main constructor, used by the nodis backbone structure.
-  PublisherIn(const PublishFunction& publish_function, const RegistrationFunction& registration_function)
+  Publisher(const PublishFunction& publish_function, const RegistrationFunction& registration_function)
     : publish_function_(publish_function), registration_function_(registration_function)
   {
     if (registration_function_)
@@ -103,7 +104,7 @@ public:
   }
 
   //! Destructor to de-register publisher.
-  ~PublisherIn()
+  ~Publisher()
   {
     if (registration_function_)
     {
