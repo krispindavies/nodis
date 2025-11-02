@@ -32,6 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace nodis_cpp
 {
 
-enum class Registration { Join, Leave };
-  
+enum class Registration
+{
+  Join,
+  Leave
+};
+
 }

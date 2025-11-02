@@ -51,5 +51,5 @@ struct MessageAny
   TimePoint time_;
   std::shared_ptr<const void> data_;
 };
-  
-}
+
+}  // namespace nodis_cpp

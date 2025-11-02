@@ -27,13 +27,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "nodis_cpp/core.h"
-#include "nodis_cpp/subscriber_in.h"
-#include "nodis_cpp/subscriber_in.h"
-
 #include <gtest/gtest.h>
 
 #include <iostream>
+
+#include "nodis_cpp/core.h"
+#include "nodis_cpp/subscriber_in.h"
 
 TEST(CorePubSubTest, core_pub_sub_test)
 {
@@ -47,7 +46,6 @@ TEST(CorePubSubTest, core_pub_sub_test)
   auto double_sub = core.subscriberIn<double>("/data_link", 10);
   EXPECT_EQ(10, double_sub.capacity());
   EXPECT_EQ(0, double_sub.size());
-  
 
   // Publish some messages.
   ASSERT_NO_THROW(double_pub.publish(6.4));
@@ -61,7 +59,7 @@ TEST(CorePubSubTest, core_pub_sub_test)
   EXPECT_EQ(6.4, *(double_sub.getMessage(0).data_));
   EXPECT_EQ(3.6, *(double_sub.getMessage(1).data_));
   EXPECT_EQ(4.9, *(double_sub.getMessage(2).data_));
-  
+
   // Publish new messages.
   ASSERT_NO_THROW(double_pub.publish(1.9));
   ASSERT_NO_THROW(double_pub.publish(9.7));
@@ -74,7 +72,7 @@ TEST(CorePubSubTest, core_pub_sub_test)
   EXPECT_EQ(9.7, *(double_sub.getMessage(1).data_));
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

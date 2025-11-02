@@ -29,11 +29,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "nodis_cpp/registration.h"
-
 #include <chrono>
 #include <functional>
 #include <memory>
+
+#include "nodis_cpp/registration.h"
 
 namespace nodis_cpp
 {
@@ -50,7 +50,7 @@ public:
 
   //! Copy constructor.
   PublisherIn(const PublisherIn& pub)
-  : publish_function_(pub.publish_function_), registration_function_(pub.registration_function_)
+    : publish_function_(pub.publish_function_), registration_function_(pub.registration_function_)
   {
     if (registration_function_)
     {
@@ -64,7 +64,7 @@ public:
 
   //! Main constructor, used by the nodis backbone structure.
   PublisherIn(const PublishFunction& publish_function, const RegistrationFunction& registration_function)
-  : publish_function_(publish_function), registration_function_(registration_function)
+    : publish_function_(publish_function), registration_function_(registration_function)
   {
     if (registration_function_)
     {
@@ -116,4 +116,4 @@ protected:
   RegistrationFunction registration_function_;
 };
 
-}
+}  // namespace nodis_cpp

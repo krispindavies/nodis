@@ -29,22 +29,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <algorithm>
+#include <any>
+#include <deque>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <typeindex>
+#include <typeinfo>
+
 #include "nodis_cpp/message.h"
 #include "nodis_cpp/publisher_in.h"
 #include "nodis_cpp/registration.h"
 #include "nodis_cpp/subscriber_in.h"
-
-#include <algorithm>
-#include <any>
-#include <functional>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <deque>
-#include <typeindex>
-#include <typeinfo>
-
-#include <iostream>
 
 namespace nodis_cpp
 {
@@ -60,7 +59,8 @@ public:
     const std::type_index type = typeid(T);
     const TopicType topic_type = std::make_pair(topic, type);
 
-    const typename PublisherIn<T>::PublishFunction pub_func = [this, topic_type](const TimePoint& time, const std::shared_ptr<const T>& data) -> bool
+    const typename PublisherIn<T>::PublishFunction pub_func =
+      [this, topic_type](const TimePoint& time, const std::shared_ptr<const T>& data) -> bool
     {
       std::scoped_lock lock(pub_sub_mutex_);
 
@@ -78,7 +78,8 @@ public:
       pub_sub_iter->second.inbox_.push_back(msg);
 
       // Sort by time to ensure that messages are in order.
-      std::sort(pub_sub_iter->second.inbox_.begin(), pub_sub_iter->second.inbox_.end(), [](const MessageAny& lhs, const MessageAny& rhs){ return lhs.time_ < rhs.time_; });
+      std::sort(pub_sub_iter->second.inbox_.begin(), pub_sub_iter->second.inbox_.end(),
+                [](const MessageAny& lhs, const MessageAny& rhs) { return lhs.time_ < rhs.time_; });
 
       // Reduce inbox down to max capacity.
       while (pub_sub_iter->second.inbox_.size() > pub_sub_iter->second.max_capacity_)
@@ -122,8 +123,8 @@ public:
           break;
       }
     };
-    
-    return PublisherIn<T>{ pub_func, reg_func };
+
+    return PublisherIn<T>{pub_func, reg_func};
   }
 
   template <typename T>
@@ -132,7 +133,9 @@ public:
     const std::type_index type = typeid(T);
     const TopicType topic_type = std::make_pair(topic, type);
 
-    const typename SubscriberIn<T>::SyncFunction sync_func = [this, topic_type](const std::size_t capacity, const std::optional<TimePoint>& time_point) -> std::vector<Message<T>>
+    const typename SubscriberIn<T>::SyncFunction sync_func =
+      [this, topic_type](const std::size_t capacity,
+                         const std::optional<TimePoint>& time_point) -> std::vector<Message<T>>
     {
       std::scoped_lock lock(pub_sub_mutex_);
 
@@ -149,7 +152,7 @@ public:
       {
         starting_index = pub_sub_iter->second.inbox_.size() - capacity;
       }
-      
+
       // Copy messages from the inbox to the result starting from the starting index.
       std::vector<Message<T>> result;
       result.reserve(capacity);
@@ -172,7 +175,8 @@ public:
       return result;
     };
 
-    const typename SubscriberIn<T>::RegistrationFunction reg_func = [this, topic_type](const Registration registration, const std::size_t capacity)
+    const typename SubscriberIn<T>::RegistrationFunction reg_func =
+      [this, topic_type](const Registration registration, const std::size_t capacity)
     {
       std::scoped_lock lock(pub_sub_mutex_);
       auto pub_sub_iter = pub_sub_table_.find(topic_type);
@@ -205,14 +209,16 @@ public:
           break;
       }
     };
-    
-    return SubscriberIn<T>{ sync_func, reg_func, capacity };
+
+    return SubscriberIn<T>{sync_func, reg_func, capacity};
   }
 
 protected:
   struct PubSubEntry
   {
-    static PubSubEntry makeEntry(const std::size_t publishers, const std::size_t subscribers, const std::size_t max_capacity)
+    static PubSubEntry makeEntry(const std::size_t publishers,
+                                 const std::size_t subscribers,
+                                 const std::size_t max_capacity)
     {
       PubSubEntry result;
       result.publishers_ = publishers;
@@ -221,9 +227,9 @@ protected:
       return result;
     }
 
-    std::size_t publishers_{ 0 };
-    std::size_t subscribers_{ 0 };
-    std::size_t max_capacity_{ 0 };
+    std::size_t publishers_{0};
+    std::size_t subscribers_{0};
+    std::size_t max_capacity_{0};
     std::deque<MessageAny> inbox_;
   };
 
@@ -231,4 +237,4 @@ protected:
   std::map<TopicType, PubSubEntry> pub_sub_table_;
 };
 
-}
+}  // namespace nodis_cpp

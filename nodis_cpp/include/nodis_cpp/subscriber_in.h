@@ -29,15 +29,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "nodis_cpp/message.h"
-#include "nodis_cpp/registration.h"
-
 #include <cstddef>
 #include <functional>
 #include <memory>
 #include <optional>
-#include <vector>
 #include <stdexcept>
+#include <vector>
+
+#include "nodis_cpp/message.h"
+#include "nodis_cpp/registration.h"
 
 namespace nodis_cpp
 {
@@ -46,7 +46,8 @@ template <typename T>
 class SubscriberIn
 {
 public:
-  using SyncFunction = std::function<std::vector<Message<T>>(const std::size_t, const std::optional<TimePoint>& time_point)>;
+  using SyncFunction =
+    std::function<std::vector<Message<T>>(const std::size_t, const std::optional<TimePoint>& time_point)>;
   using RegistrationFunction = std::function<void(const Registration, std::size_t capacity)>;
 
   //! Default constructor.
@@ -54,7 +55,7 @@ public:
 
   //! Copy constructor.
   SubscriberIn(const SubscriberIn& sub)
-  : capacity_(sub.capacity_), sync_function_(sub.sync_function_), registration_function_(sub.registration_function_)
+    : capacity_(sub.capacity_), sync_function_(sub.sync_function_), registration_function_(sub.registration_function_)
   {
     if (registration_function_)
     {
@@ -67,8 +68,10 @@ public:
   SubscriberIn(SubscriberIn&& sub) = default;
 
   //! Main constructor.
-  SubscriberIn(const SyncFunction& sync_function, const RegistrationFunction& registration_function, const std::size_t capacity)
-  : sync_function_(sync_function), registration_function_(registration_function), capacity_(capacity)
+  SubscriberIn(const SyncFunction& sync_function,
+               const RegistrationFunction& registration_function,
+               const std::size_t capacity)
+    : sync_function_(sync_function), registration_function_(registration_function), capacity_(capacity)
   {
     if (registration_function_)
     {
@@ -139,4 +142,4 @@ protected:
   std::vector<Message<T>> inbox_;
 };
 
-}
+}  // namespace nodis_cpp
