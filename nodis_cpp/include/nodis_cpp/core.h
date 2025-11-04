@@ -52,6 +52,13 @@ class Core
 public:
   using TopicType = std::pair<std::string, std::type_index>;
 
+  struct TopicInfo
+  {
+    std::size_t publishers_{0};
+    std::size_t subscribers_{0};
+    std::size_t capacity_{0};
+  };
+
   template <typename T>
   Publisher<T> publisher(const std::string& topic)
   {
@@ -81,7 +88,7 @@ public:
                 [](const MessageVoid& lhs, const MessageVoid& rhs) { return lhs.time_ < rhs.time_; });
 
       // Reduce inbox down to max capacity.
-      while (pub_sub_iter->second.inbox_.size() > pub_sub_iter->second.max_capacity_)
+      while (pub_sub_iter->second.inbox_.size() > pub_sub_iter->second.capacity_)
       {
         pub_sub_iter->second.inbox_.pop_front();
       }
@@ -189,7 +196,7 @@ public:
           else
           {
             pub_sub_iter->second.subscribers_ += 1;
-            pub_sub_iter->second.max_capacity_ = std::max(pub_sub_iter->second.max_capacity_, capacity);
+            pub_sub_iter->second.capacity_ = std::max(pub_sub_iter->second.capacity_, capacity);
           }
           break;
 
@@ -212,6 +219,19 @@ public:
     return Subscriber<T>{sync_func, reg_func, capacity};
   }
 
+  template <typename T>
+  TopicInfo topicInfo(const std::string& topic)
+  {
+    const std::type_index type = typeid(T);
+    const TopicType topic_type = std::make_pair(topic, type);
+    auto pub_sub_iter = pub_sub_table_.find(topic_type);
+    if (pub_sub_iter == pub_sub_table_.end())
+    {
+      return {};
+    }
+    return {pub_sub_iter->second.publishers_, pub_sub_iter->second.subscribers_, pub_sub_iter->second.capacity_};
+  }
+
 protected:
   struct MessageVoid
   {
@@ -223,18 +243,18 @@ protected:
   {
     static PubSubEntry makeEntry(const std::size_t publishers,
                                  const std::size_t subscribers,
-                                 const std::size_t max_capacity)
+                                 const std::size_t capacity)
     {
       PubSubEntry result;
       result.publishers_ = publishers;
       result.subscribers_ = subscribers;
-      result.max_capacity_ = max_capacity;
+      result.capacity_ = capacity;
       return result;
     }
 
     std::size_t publishers_{0};
     std::size_t subscribers_{0};
-    std::size_t max_capacity_{0};
+    std::size_t capacity_{0};
     std::deque<MessageVoid> inbox_;
   };
 

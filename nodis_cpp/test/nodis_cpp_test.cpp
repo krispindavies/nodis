@@ -39,12 +39,20 @@ TEST(NodisCppTest, pub_sub_test)
   nodis_cpp::Core core;
 
   // Set up the publisher.
-  auto double_pub = core.publisher<double>("/data_link");
+  auto double_pub = core.publisher<double>("data_link");
+  auto topic_info = core.topicInfo<double>("data_link");
+  EXPECT_EQ(1, topic_info.publishers_);
+  EXPECT_EQ(0, topic_info.subscribers_);
+  EXPECT_EQ(1, topic_info.capacity_);
 
   // Set up the subscriber.
-  auto double_sub = core.subscriber<double>("/data_link", 10);
+  auto double_sub = core.subscriber<double>("data_link", 10);
   EXPECT_EQ(10, double_sub.capacity());
   EXPECT_EQ(0, double_sub.size());
+  topic_info = core.topicInfo<double>("data_link");
+  EXPECT_EQ(1, topic_info.publishers_);
+  EXPECT_EQ(1, topic_info.subscribers_);
+  EXPECT_EQ(10, topic_info.capacity_);
 
   // Publish some messages.
   ASSERT_NO_THROW(double_pub.publish(6.4));
@@ -69,6 +77,45 @@ TEST(NodisCppTest, pub_sub_test)
   ASSERT_EQ(2, double_sub.size());
   EXPECT_EQ(1.9, *(double_sub.getMessage(0).data_));
   EXPECT_EQ(9.7, *(double_sub.getMessage(1).data_));
+
+  // Copy the publisher.
+  auto double_pub_copy = double_pub;
+  topic_info = core.topicInfo<double>("data_link");
+  EXPECT_EQ(2, topic_info.publishers_);
+  EXPECT_EQ(1, topic_info.subscribers_);
+  EXPECT_EQ(10, topic_info.capacity_);
+
+  // Publish another message.
+  ASSERT_NO_THROW(double_pub_copy.publish(-4.4));
+
+  // Check that the copied publisher's message showed up on the other end.
+  ASSERT_NO_THROW(double_sub.syncNew());
+  EXPECT_EQ(10, double_sub.capacity());
+  ASSERT_EQ(1, double_sub.size());
+  EXPECT_EQ(-4.4, *(double_sub.getMessage(0).data_));
+
+  // Copy the subscriber.
+  auto double_sub_copy = double_sub;
+  topic_info = core.topicInfo<double>("data_link");
+  EXPECT_EQ(2, topic_info.publishers_);
+  EXPECT_EQ(2, topic_info.subscribers_);
+  EXPECT_EQ(10, topic_info.capacity_);
+
+  // Check that the copied subscriber can see past messages.
+  ASSERT_NO_THROW(double_sub_copy.sync());
+  EXPECT_EQ(10, double_sub_copy.capacity());
+  ASSERT_EQ(6, double_sub_copy.size());
+  EXPECT_EQ(6.4, *(double_sub_copy.getMessage(0).data_));
+  EXPECT_EQ(3.6, *(double_sub_copy.getMessage(1).data_));
+  EXPECT_EQ(4.9, *(double_sub_copy.getMessage(2).data_));
+  EXPECT_EQ(1.9, *(double_sub_copy.getMessage(3).data_));
+  EXPECT_EQ(9.7, *(double_sub_copy.getMessage(4).data_));
+  EXPECT_EQ(-4.4, *(double_sub_copy.getMessage(5).data_));
+
+  // Check that we didn't affect the original subscriber.
+  EXPECT_EQ(10, double_sub.capacity());
+  ASSERT_EQ(1, double_sub.size());
+  EXPECT_EQ(-4.4, *(double_sub.getMessage(0).data_));
 }
 
 int main(int argc, char** argv)
