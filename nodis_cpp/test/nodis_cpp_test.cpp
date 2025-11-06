@@ -116,6 +116,35 @@ TEST(NodisCppTest, pub_sub_test)
   EXPECT_EQ(10, double_sub.capacity());
   ASSERT_EQ(1, double_sub.size());
   EXPECT_EQ(-4.4, *(double_sub.getMessage(0).data_));
+
+  // Move-copy the publisher.
+  auto double_pub_move_copy = std::move(double_pub_copy);
+  topic_info = core.topicInfo<double>("data_link");
+  EXPECT_EQ(2, topic_info.publishers_);
+  EXPECT_EQ(2, topic_info.subscribers_);
+  EXPECT_EQ(10, topic_info.capacity_);
+
+  // Publish another message.
+  ASSERT_NO_THROW(double_pub_move_copy.publish(-6.7));
+
+  // Check that the move copied publisher's message showed up on the other end.
+  ASSERT_NO_THROW(double_sub.syncNew());
+  EXPECT_EQ(10, double_sub.capacity());
+  ASSERT_EQ(1, double_sub.size());
+  EXPECT_EQ(-6.7, *(double_sub.getMessage(0).data_));
+
+  // Move-copy the subscriber.
+  auto double_sub_move_copy = std::move(double_sub_copy);
+  topic_info = core.topicInfo<double>("data_link");
+  EXPECT_EQ(2, topic_info.publishers_);
+  EXPECT_EQ(2, topic_info.subscribers_);
+  EXPECT_EQ(10, topic_info.capacity_);
+
+  // Check that the move-copied subscriber only synced the new message.
+  ASSERT_NO_THROW(double_sub_move_copy.syncNew());
+  EXPECT_EQ(10, double_sub_move_copy.capacity());
+  ASSERT_EQ(1, double_sub_move_copy.size());
+  EXPECT_EQ(-6.7, *(double_sub_move_copy.getMessage(0).data_));
 }
 
 int main(int argc, char** argv)
