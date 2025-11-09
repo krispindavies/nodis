@@ -173,6 +173,11 @@ TEST(NodisCppTest, pub_sub_test)
   ASSERT_NO_THROW(double_sub.syncNew());
   EXPECT_EQ(10, double_sub.capacity());
   ASSERT_EQ(0, double_sub.size());
+
+  // Check that an empty subscriber can still retrieve only new messages.
+  ASSERT_NO_THROW(double_sub.syncNew());
+  EXPECT_EQ(10, double_sub.capacity());
+  ASSERT_EQ(0, double_sub.size());
 }
 
 int main(int argc, char** argv)

@@ -103,23 +103,50 @@ public:
   //! Retrieve the entire buffer of messages from the nodis core.
   void sync()
   {
-    if (sync_function_)
+    if (!sync_function_)
     {
-      inbox_ = sync_function_(capacity_, std::optional<TimePoint>{});
+      return;
+    }
+
+    // Retrieve all messages from the publisher (up to capacity).
+    inbox_ = sync_function_(capacity_, std::optional<TimePoint>{});
+
+    // Update the last message time.
+    for (const auto& entry : inbox_)
+    {
+      if (last_message_time_.has_value())
+      {
+        last_message_time_ = std::max(last_message_time_.value(), entry.time_);
+      }
+      else
+      {
+        last_message_time_ = entry.time_;
+      }
     }
   }
 
   //! Retrieve all new messages from the nodis core.
   void syncNew()
   {
-    if (sync_function_)
+    if (!sync_function_)
     {
-      std::optional<TimePoint> time_point;
-      if (!inbox_.empty())
+      return;
+    }
+
+    // Retrieve only new messages from the publisher (up to capacity).
+    inbox_ = sync_function_(capacity_, last_message_time_);
+
+    // Update the last message time.
+    for (const auto& entry : inbox_)
+    {
+      if (last_message_time_.has_value())
       {
-        time_point = inbox_.back().time_;
+        last_message_time_ = std::max(last_message_time_.value(), entry.time_);
       }
-      inbox_ = sync_function_(capacity_, time_point);
+      else
+      {
+        last_message_time_ = entry.time_;
+      }
     }
   }
 
@@ -161,6 +188,7 @@ protected:
 
   std::size_t capacity_;
   std::vector<Message<T>> inbox_;
+  std::optional<TimePoint> last_message_time_;
 };
 
 }  // namespace nodis_cpp
