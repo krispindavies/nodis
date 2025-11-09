@@ -77,6 +77,8 @@ public:
     {
       registration_function_(Registration::Join);
     }
+
+    return *this;
   }
 
   //! Main constructor, used by the nodis core structure.

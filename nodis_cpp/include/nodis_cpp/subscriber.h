@@ -84,6 +84,8 @@ public:
     {
       registration_function_(Registration::Join, capacity_);
     }
+
+    return *this;
   }
 
   //! Main constructor.

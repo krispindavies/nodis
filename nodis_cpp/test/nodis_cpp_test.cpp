@@ -145,6 +145,34 @@ TEST(NodisCppTest, pub_sub_test)
   EXPECT_EQ(10, double_sub_move_copy.capacity());
   ASSERT_EQ(1, double_sub_move_copy.size());
   EXPECT_EQ(-6.7, *(double_sub_move_copy.getMessage(0).data_));
+
+  // Assign the publisher.
+  ASSERT_NO_THROW(double_pub_move_copy = double_pub);
+  topic_info = core.topicInfo<double>("data_link");
+  EXPECT_EQ(2, topic_info.publishers_);
+  EXPECT_EQ(2, topic_info.subscribers_);
+  EXPECT_EQ(10, topic_info.capacity_);
+
+  // Publish another message.
+  ASSERT_NO_THROW(double_pub_move_copy.publish(19.2));
+
+  // Check that the assigned publisher's message showed up on the other end.
+  ASSERT_NO_THROW(double_sub.syncNew());
+  EXPECT_EQ(10, double_sub.capacity());
+  ASSERT_EQ(1, double_sub.size());
+  EXPECT_EQ(19.2, *(double_sub.getMessage(0).data_));
+
+  // Assign the subscriber.
+  ASSERT_NO_THROW(double_sub_move_copy = double_sub);
+  topic_info = core.topicInfo<double>("data_link");
+  EXPECT_EQ(2, topic_info.publishers_);
+  EXPECT_EQ(2, topic_info.subscribers_);
+  EXPECT_EQ(10, topic_info.capacity_);
+
+  // Check that the assigned subscriber doesn't have any new messages.
+  ASSERT_NO_THROW(double_sub.syncNew());
+  EXPECT_EQ(10, double_sub.capacity());
+  ASSERT_EQ(0, double_sub.size());
 }
 
 int main(int argc, char** argv)
