@@ -65,8 +65,26 @@ public:
   }
 
   //! Move constructor.
-  // TODO(kdavies) = Check if we need to update registration, not sure if destructor is called.
   Subscriber(Subscriber&& sub) = default;
+
+  // Assignment operator.
+  Subscriber& operator=(const Subscriber& sub)
+  {
+    if (registration_function_)
+    {
+      registration_function_(Registration::Leave, capacity_);
+    }
+
+    capacity_ = sub.capacity_;
+    sync_function_ = sub.sync_function_;
+    registration_function_ = sub.registration_function_;
+    inbox_ = sub.inbox_;
+
+    if (registration_function_)
+    {
+      registration_function_(Registration::Join, capacity_);
+    }
+  }
 
   //! Main constructor.
   Subscriber(const SyncFunction& sync_function,

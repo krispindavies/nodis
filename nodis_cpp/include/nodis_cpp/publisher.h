@@ -60,8 +60,24 @@ public:
   }
 
   //! Move constructor.
-  // TODO(kdavies) = Check if we need to update registration, not sure if destructor is called.
   Publisher(Publisher&& pub) = default;
+
+  // Assignment operator.
+  Publisher& operator=(const Publisher& pub)
+  {
+    if (registration_function_)
+    {
+      registration_function_(Registration::Leave);
+    }
+
+    publish_function_ = pub.publish_function_;
+    registration_function_ = pub.registration_function_;
+
+    if (registration_function_)
+    {
+      registration_function_(Registration::Join);
+    }
+  }
 
   //! Main constructor, used by the nodis core structure.
   Publisher(const PublishFunction& publish_function, const RegistrationFunction& registration_function)
