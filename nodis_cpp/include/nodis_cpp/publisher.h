@@ -60,7 +60,24 @@ public:
   }
 
   //! Move constructor.
-  Publisher(Publisher&& pub) = default;
+  Publisher(Publisher&& pub)
+  {
+    publish_function_ = pub.publish_function_;
+    registration_function_ = pub.registration_function_;
+
+    if (registration_function_)
+    {
+      registration_function_(Registration::Join);
+    }
+
+    if (pub.registration_function_)
+    {
+      pub.registration_function_(Registration::Leave);
+    }
+
+    pub.registration_function_ = {};
+    pub.publish_function_ = {};
+  }
 
   // Assignment operator.
   Publisher& operator=(const Publisher& pub)

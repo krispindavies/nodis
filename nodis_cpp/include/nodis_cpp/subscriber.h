@@ -56,7 +56,11 @@ public:
 
   //! Copy constructor.
   Subscriber(const Subscriber& sub)
-    : capacity_(sub.capacity_), sync_function_(sub.sync_function_), registration_function_(sub.registration_function_)
+    : capacity_(sub.capacity_)
+    , sync_function_(sub.sync_function_)
+    , registration_function_(sub.registration_function_)
+    , inbox_(sub.inbox_)
+    , last_message_time_(sub.last_message_time_)
   {
     if (registration_function_)
     {
@@ -65,7 +69,27 @@ public:
   }
 
   //! Move constructor.
-  Subscriber(Subscriber&& sub) = default;
+  Subscriber(Subscriber&& sub)
+  {
+    capacity_ = sub.capacity_;
+    sync_function_ = sub.sync_function_;
+    registration_function_ = sub.registration_function_;
+    inbox_ = std::move(sub.inbox_);
+    last_message_time_ = sub.last_message_time_;
+
+    if (registration_function_)
+    {
+      registration_function_(Registration::Join, capacity_);
+    }
+
+    if (sub.registration_function_)
+    {
+      sub.registration_function_(Registration::Leave, sub.capacity_);
+    }
+
+    sub.registration_function_ = {};
+    sub.sync_function_ = {};
+  }
 
   // Assignment operator.
   Subscriber& operator=(const Subscriber& sub)
@@ -79,6 +103,7 @@ public:
     sync_function_ = sub.sync_function_;
     registration_function_ = sub.registration_function_;
     inbox_ = sub.inbox_;
+    last_message_time_ = sub.last_message_time_;
 
     if (registration_function_)
     {
