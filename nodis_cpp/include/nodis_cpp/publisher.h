@@ -65,16 +65,6 @@ public:
     publish_function_ = pub.publish_function_;
     registration_function_ = pub.registration_function_;
 
-    if (registration_function_)
-    {
-      registration_function_(Registration::Join);
-    }
-
-    if (pub.registration_function_)
-    {
-      pub.registration_function_(Registration::Leave);
-    }
-
     pub.registration_function_ = {};
     pub.publish_function_ = {};
   }
@@ -82,6 +72,11 @@ public:
   // Assignment operator.
   Publisher& operator=(const Publisher& pub)
   {
+    if (this == &pub)
+    {
+      return *this;
+    }
+
     if (registration_function_)
     {
       registration_function_(Registration::Leave);
@@ -94,6 +89,28 @@ public:
     {
       registration_function_(Registration::Join);
     }
+
+    return *this;
+  }
+
+  // Move assignment operator
+  Publisher& operator=(Publisher&& pub)
+  {
+    if (this == &pub)
+    {
+      return *this;
+    }
+
+    if (registration_function_)
+    {
+      registration_function_(Registration::Leave);
+    }
+
+    publish_function_ = pub.publish_function_;
+    registration_function_ = pub.registration_function_;
+
+    pub.publish_function_ = {};
+    pub.registration_function_ = {};
 
     return *this;
   }
