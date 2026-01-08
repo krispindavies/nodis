@@ -108,7 +108,7 @@ public:
     return *this;
   }
 
-  // Move assignment operator
+  // Move assignment operator.
   Subscriber& operator=(Subscriber&& sub)
   {
     if (this == &sub)
