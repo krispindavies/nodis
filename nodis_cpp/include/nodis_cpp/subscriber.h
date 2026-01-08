@@ -109,16 +109,16 @@ public:
   }
 
   // Move assignment operator
-  Publisher& operator=(Publisher&& pub)
+  Subscriber& operator=(Subscriber&& sub)
   {
-    if (this == &pub)
+    if (this == &sub)
     {
       return *this;
     }
 
     if (registration_function_)
     {
-      registration_function_(Registration::Leave);
+      registration_function_(Registration::Leave, capacity_);
     }
 
     capacity_ = sub.capacity_;
